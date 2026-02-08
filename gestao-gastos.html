@@ -1503,8 +1503,8 @@
                             id: generateId(),
                             date: date,
                             description: description,
-                            value: Math.abs(value),
-                            isExpense: value < 0 || true,
+                            value: value,
+                            isExpense: value < 0,
                             category: category.name,
                             confidence: category.confidence,
                             userCorrected: false,
@@ -1933,7 +1933,7 @@
                         <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(t.description)}</td>
                         <td style="font-size: 0.85rem;">${escapeHtml(t.statementType || '-')}</td>
                         <td><span class="category-tag" style="background: ${color}22; color: ${color}">${t.category}</span></td>
-                        <td class="value-negative">${formatCurrency(t.value)}</td>
+                        <td class="${t.value < 0 ? 'value-negative' : 'value-positive'}">${formatCurrency(t.value)}</td>
                     </tr>
                 `;
             });
@@ -1988,7 +1988,7 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="value-negative" style="font-weight: 600;">${formatCurrency(t.value)}</td>
+                        <td class="${t.value < 0 ? 'value-negative' : 'value-positive'}" style="font-weight: 600;">${formatCurrency(t.value)}</td>
                         <td>
                             <button class="action-btn" onclick="editTransaction('${t.id}')" title="Editar categoria">✏️</button>
                             <button class="action-btn" onclick="deleteTransaction('${t.id}')" title="Excluir">🗑️</button>
@@ -2237,7 +2237,7 @@
                 <div class="stats-list">
                     <p><strong>Data</strong> <span>${formatDate(t.date)}</span></p>
                     <p><strong>Descrição</strong> <span style="word-break: break-word;">${escapeHtml(t.description)}</span></p>
-                    <p><strong>Valor</strong> <span class="value-negative">${formatCurrency(t.value)}</span></p>
+                    <p><strong>Valor</strong> <span class="${t.value < 0 ? 'value-negative' : 'value-positive'}">${formatCurrency(t.value)}</span></p>
                 </div>
             `;
 
@@ -2312,16 +2312,15 @@
                 return;
             }
 
-            const headers = ['Data', 'Descrição', 'Tipo de extrato', 'Categoria', 'Valor'];
             const rows = transactions.map(t => [
                 t.date,
-                `"${t.description.replace(/"/g, '""')}"`,
                 t.statementType || '',
                 t.category,
-                t.value.toFixed(2).replace('.', ',')
+                t.value.toFixed(2).replace('.', ','),
+                `"${t.description.replace(/"/g, '""')}"`
             ]);
 
-            const csv = '\ufeff' + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
+            const csv = '\ufeff' + rows.map(r => r.join(';')).join('\n');
             downloadFile(csv, 'meus_gastos.csv', 'text/csv;charset=utf-8');
             showToast('CSV exportado!', 'success');
         }
