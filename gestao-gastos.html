@@ -1047,7 +1047,7 @@
                 <textarea id="categoryKeywords" class="form-control" rows="4" placeholder="palavra1, palavra2, palavra3"></textarea>
             </div>
             <div class="btn-group" style="margin-top: 20px;">
-                <button id="btnSaveCategory" class="btn btn-primary">💾 Salvar</button>
+                <button type="button" id="btnSaveCategory" class="btn btn-primary">💾 Salvar</button>
                 <button class="btn btn-secondary" onclick="closeCategoryModal()">Cancelar</button>
             </div>
         </div>
@@ -1730,6 +1730,17 @@
             document.getElementById('btnResetCategories').addEventListener('click', resetCategories);
             document.getElementById('btnSaveCategory').addEventListener('click', saveCategory);
 
+            // Delegation: edit/delete category buttons (evita quebra com aspas no nome)
+            document.getElementById('categoryList').addEventListener('click', (e) => {
+                const editBtn = e.target.closest('.btn-edit-category');
+                const deleteBtn = e.target.closest('.btn-delete-category');
+                const item = e.target.closest('.category-item');
+                if (!item) return;
+                const name = item.getAttribute('data-category-name');
+                if (editBtn && name !== null) openCategoryModal(name);
+                if (deleteBtn && name !== null) deleteCategory(name);
+            });
+
             // Transaction
             document.getElementById('btnSaveTransaction').addEventListener('click', saveTransaction);
 
@@ -1996,15 +2007,16 @@
 
             Object.entries(categories).sort((a, b) => a[0].localeCompare(b[0])).forEach(([name, data]) => {
                 const kwPreview = data.keywords.slice(0, 5).join(', ') + (data.keywords.length > 5 ? '...' : '');
+                const nameAttr = name.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 html += `
-                    <div class="category-item">
+                    <div class="category-item" data-category-name="${nameAttr}">
                         <div class="category-color" style="background: ${data.color}"></div>
                         <div class="category-info">
                             <div class="category-name">${escapeHtml(name)}</div>
                             <div class="category-keywords">${data.keywords.length} palavras: ${kwPreview || 'nenhuma'}</div>
                         </div>
-                        <button class="btn btn-sm btn-secondary" onclick="openCategoryModal('${escapeHtml(name)}')">✏️</button>
-                        ${name !== 'Outros' ? `<button class="btn btn-sm btn-danger" onclick="deleteCategory('${escapeHtml(name)}')">🗑️</button>` : ''}
+                        <button type="button" class="btn btn-sm btn-secondary btn-edit-category" title="Editar">✏️</button>
+                        ${name !== 'Outros' ? `<button type="button" class="btn btn-sm btn-danger btn-delete-category" title="Excluir">🗑️</button>` : ''}
                     </div>
                 `;
             });
